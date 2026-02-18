@@ -3,41 +3,40 @@ from pyspark.sql import functions as F
 
 @dlt.table(
     name="ml_model_registry",
-    comment="Model metadata and registration information"
+    comment="Registre des métadonnées du modèle incluant la comparaison des performances"
 )
 def ml_model_registry():
     """
-    ML Model Registry
-    Stocke les métadonnées et le statut du modèle.
-    Lit directement depuis la fonction 'ml_model_training'.
+    ML Model Registry - Version Améliorée
+    Enregistre les performances du modèle de base vs le modèle enrichi.
     """
-    # On lit les métriques générées à l'étape précédente
+    # Lecture des métriques de comparaison
     metrics_df = dlt.read("ml_model_training")
     
-    # Création de l'entrée du registre avec les métadonnées
     return (
         metrics_df
         .withColumn("model_name", F.lit("taxi_fare_prediction_model"))
-        .withColumn("model_version", F.lit("v1.0"))
+        .withColumn("model_version", F.lit("v2.0_improved")) # On passe en v2 !
         .withColumn("model_status", F.lit("active"))
-        # On met tes informations de catalogue et schéma ici
-        # Dans ton fichier ml_model_registry.py, modifie ces deux colonnes :
+        # Ajout manuel de model_type pour corriger l'erreur
+        .withColumn("model_type", F.lit("Heuristic Linear Regression"))
         .withColumn("catalog", F.lit("taxi_mlops_prod"))
         .withColumn("schema", F.lit("khady_ndiaye"))
-        .withColumn("description", F.lit("Linear regression model for taxi fare prediction based on trip characteristics"))
+        .withColumn("description", F.lit("Modèle amélioré avec features de trafic et rush hour (Partie 3)"))
         .withColumn("registered_at", F.current_timestamp())
         .select(
             "model_name",
             "model_version",
-            "model_type",
+            "model_type",       
             "model_status",
             "catalog",
             "schema",
-            "rmse",
-            "mae",
-            "correlation",
+            "rmse_base",        # Colonnes provenant de ml_model_training amélioré
+            "rmse_improved",
+            "mae_base",
+            "mae_improved",
+            "performance_gain_pct",
             "description",
-            "training_timestamp",
             "registered_at"
         )
     )
