@@ -1,5 +1,5 @@
 # Complete MLOps Pipeline for Taxi Fare Prediction
-
+ 
 ## 🎓 Institut Polytechnique de Saint Louis (IPSL)
 
 **Course:** Data Engineering, AI Engineering and MLOps  
