@@ -1,4 +1,4 @@
-from pyspark import pipelines as dp
+import dlt as dp
 from pyspark.sql import functions as F
 
 @dp.table(
@@ -17,14 +17,11 @@ from pyspark.sql import functions as F
 def silver_taxi_features():
     """
     Silver layer: Feature engineering for ML
-    - Cleans and validates raw data
-    - Derives time-based features (hour, day of week, time of day)
-    - Calculates trip metrics (duration, speed)
-    - Identifies special trip types (airport trips)
-    - Applies data quality expectations
+    Note: On lit directement depuis la fonction 'bronze_taxi_trips'
     """
     return (
-        spark.readStream.table("bronze_taxi_trips_[votrePrenom_Nom]")
+        # Utilise le nom de la fonction définie dans ton fichier bronze.py
+        dp.read_stream("bronze_taxi_trips")
         .filter("VendorID IS NOT NULL")
         
         # Calculate trip duration in minutes
