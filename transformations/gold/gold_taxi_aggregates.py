@@ -1,21 +1,18 @@
-from pyspark import pipelines as dp
+import dlt
 from pyspark.sql import functions as F
 
-@dp.materialized_view(
-    comment="Hourly aggregated taxi metrics by pickup location for ML model features",
+@dlt.table(
+    name="gold_hourly_location_metrics",
+    comment="Hourly aggregated taxi metrics by pickup location",
     partition_cols=["pickup_date"]
 )
 def gold_hourly_location_metrics():
     """
-    Gold layer: Hourly aggregations by location
-    Provides features for demand forecasting and location-based ML models:
-    - Trip counts and demand patterns
-    - Average trip metrics (distance, duration, fare, speed)
-    - Revenue metrics
-    - Airport trip percentages
+    Gold layer: Aggrégations horaires par localisation.
+    Lit depuis la table silver_taxi_features.
     """
     return (
-        spark.read.table("silver_taxi_features")
+        dlt.read("silver_taxi_features")
         .groupBy(
             "pickup_date",
             "pickup_hour",
@@ -38,21 +35,17 @@ def gold_hourly_location_metrics():
     )
 
 
-@dp.materialized_view(
-    comment="Daily aggregated taxi metrics by time of day for ML model features",
+@dlt.table(
+    name="gold_daily_time_patterns",
+    comment="Daily aggregated taxi metrics by time of day",
     partition_cols=["pickup_date"]
 )
 def gold_daily_time_patterns():
     """
-    Gold layer: Daily time-of-day patterns
-    Provides features for time-based ML models:
-    - Demand patterns by time of day
-    - Day of week trends
-    - Payment type distributions
-    - Trip characteristic patterns
+    Gold layer: Patterns quotidiens par moment de la journée.
     """
     return (
-        spark.read.table("silver_taxi_features")
+        dlt.read("silver_taxi_features")
         .groupBy(
             "pickup_date",
             "pickup_day_of_week",
@@ -76,20 +69,17 @@ def gold_daily_time_patterns():
     )
 
 
-@dp.materialized_view(
-    comment="Location pair metrics for route optimization and demand prediction",
+@dlt.table(
+    name="gold_location_pair_metrics",
+    comment="Location pair metrics for route optimization",
     partition_cols=["pickup_date"]
 )
 def gold_location_pair_metrics():
     """
-    Gold layer: Pickup-Dropoff location pair analysis
-    Provides features for route optimization and demand prediction:
-    - Popular routes
-    - Average metrics per route
-    - Route efficiency metrics
+    Gold layer: Analyse des trajets (Pickup-Dropoff).
     """
     return (
-        spark.read.table("silver_taxi_features")
+        dlt.read("silver_taxi_features")
         .groupBy(
             "pickup_date",
             "PULocationID",
@@ -104,5 +94,5 @@ def gold_location_pair_metrics():
             F.min("trip_duration_minutes").alias("min_route_duration"),
             F.max("trip_duration_minutes").alias("max_route_duration")
         )
-        .filter("route_trip_count >= 5")  # Filter for statistically significant routes
+        .filter("route_trip_count >= 5")
     )

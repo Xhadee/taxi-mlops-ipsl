@@ -1,30 +1,28 @@
-from pyspark import pipelines as dp
+import dlt
 from pyspark.sql import functions as F
 
-@dp.materialized_view(
+@dlt.table(
+    name="ml_model_registry",
     comment="Model metadata and registration information"
 )
 def ml_model_registry():
     """
     ML Model Registry
-    - Stores model metadata and version information
-    - Tracks model performance metrics
-    - Provides model lineage information
-    
-    Note: Actual MLflow model registration should be done outside the pipeline.
-    This dataset tracks model metadata within the pipeline.
+    Stocke les métadonnées et le statut du modèle.
+    Lit directement depuis la fonction 'ml_model_training'.
     """
-    # Read training metrics
-    metrics_df = spark.read.table("ml_model_training_[votrePrenom_Nom]")
+    # On lit les métriques générées à l'étape précédente
+    metrics_df = dlt.read("ml_model_training")
     
-    # Create model registry entry with metadata
+    # Création de l'entrée du registre avec les métadonnées
     return (
         metrics_df
         .withColumn("model_name", F.lit("taxi_fare_prediction_model"))
         .withColumn("model_version", F.lit("v1.0"))
         .withColumn("model_status", F.lit("active"))
-        .withColumn("catalog", F.lit("taxi_mlops_prod"))
-        .withColumn("schema", F.lit("default"))
+        # On met tes informations de catalogue et schéma ici
+        .withColumn("catalog", F.lit("workspace"))
+        .withColumn("schema", F.lit("khady_ndiaye"))
         .withColumn("description", F.lit("Linear regression model for taxi fare prediction based on trip characteristics"))
         .withColumn("registered_at", F.current_timestamp())
         .select(
