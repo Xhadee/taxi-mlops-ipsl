@@ -1,20 +1,18 @@
-from pyspark import pipelines as dp
+import dlt as dp
 from pyspark.sql import functions as F
 
-@dp.materialized_view(
+@dp.table(
     comment="ML training dataset with features for fare amount prediction model"
 )
 def ml_training_data():
     """
     ML Training Data Preparation
-    Prepares features from silver layer for fare prediction model:
-    - Target variable: total_amount
-    - Features: trip characteristics, time features, location features
-    - Filters out invalid records
-    - Adds train/test split indicator
+    Prepares features from silver layer for fare prediction model.
+    Lit directement depuis la fonction 'silver_taxi_features'.
     """
     return (
-        spark.read.table("silver_taxi_features_[votrePrenom_Nom]")
+        # On lit la sortie de la fonction silver_taxi_features définie dans l'autre fichier
+        dp.read("silver_taxi_features")
         .filter("""
             trip_distance > 0 AND trip_distance < 100 AND
             trip_duration_minutes > 0 AND trip_duration_minutes < 180 AND
