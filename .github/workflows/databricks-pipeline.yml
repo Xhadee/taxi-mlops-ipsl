@@ -5,9 +5,9 @@ on:
     branches:
       - main
       - develop
+    # Le pipeline se déclenche si vous modifiez un fichier .py n'importe où
     paths:
-      - 'transformations/**'
-      - 'cicd/**'
+      - '**/*.py'
   pull_request:
     branches:
       - main
@@ -19,7 +19,6 @@ on:
         type: boolean
         default: false
 
-# Add permissions for the workflow
 permissions:
   contents: read
   pull-requests: write
@@ -44,7 +43,8 @@ jobs:
       
       - name: Validate Python syntax
         run: |
-          python -m py_compile transformations/**/*.py
+          # Cette commande vérifie tous les fichiers python du projet
+          python -m py_compile **/*.py
 
   trigger-pipeline:
     name: Trigger Complete MLOps Pipeline
@@ -66,38 +66,18 @@ jobs:
       
       - name: Trigger Pipeline Update
         env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_PROD_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PROD_TOKEN }}
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
           PIPELINE_ID: ${{ secrets.PIPELINE_ID }}
         run: |
+          # On s'assure que le chemin vers trigger_pipeline.py est correct
           python cicd/trigger_pipeline.py --action start-and-wait ${{ github.event.inputs.full_refresh && '--full-refresh' || '' }}
       
       - name: Pipeline Status
         if: always()
         env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_PROD_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PROD_TOKEN }}
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
           PIPELINE_ID: ${{ secrets.PIPELINE_ID }}
         run: |
           python cicd/trigger_pipeline.py --action status
-
-  dry-run-on-pr:
-    name: Dry Run on Pull Request
-    runs-on: ubuntu-latest
-    needs: validate-pipeline
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Comment on PR
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '✅ Complete MLOps Pipeline validation passed! Ready for merge.'
-            })
