@@ -21,7 +21,8 @@ def ml_model_registry():
         .withColumn("model_version", F.lit("v1.0"))
         .withColumn("model_status", F.lit("active"))
         # On met tes informations de catalogue et schéma ici
-        .withColumn("catalog", F.lit("workspace"))
+        # Dans ton fichier ml_model_registry.py, modifie ces deux colonnes :
+        .withColumn("catalog", F.lit("taxi_mlops_prod"))
         .withColumn("schema", F.lit("khady_ndiaye"))
         .withColumn("description", F.lit("Linear regression model for taxi fare prediction based on trip characteristics"))
         .withColumn("registered_at", F.current_timestamp())
